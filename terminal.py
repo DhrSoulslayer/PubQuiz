@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import evdev
 import os
 import curses
 import time
 import sys
 import random
+import pygame
 
 def assign_fun_team_names(devices):
     fun_team_names = [
@@ -75,6 +75,8 @@ def cancel_restart_script():
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 def main(stdscr):
+    pygame.init()
+
     curses.curs_set(0)
     stdscr.timeout(0)  # Non-blocking getch
 
@@ -126,12 +128,10 @@ def main(stdscr):
             click_registered[0] = False
 
         # Check for mouse clicks
-        for monitor, name in monitors:
-            event = monitor.read_one()
-            if event:
-                if quiz_round[0] == 1 and not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
-                    last_team[0] = name
-                    click_registered[0] = True
+        for event in pygame.event.get():
+            if quiz_round[0] == 1 and not click_registered[0] and event.type == pygame.MOUSEBUTTONDOWN:
+                last_team[0] = team_names[event.device]
+                click_registered[0] = True
 
         # Refresh the screen only when necessary
         stdscr.refresh()

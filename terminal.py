@@ -80,10 +80,10 @@ def main(stdscr):
     curses.curs_set(0)
     stdscr.timeout(0)  # Non-blocking getch
 
-    num_mice = pygame.mouse.get_num()
+    num_mice = pygame.mouse.get_count()
     team_names = {}
     for i in range(num_mice):
-        device_name = pygame.mouse.get_name(i)
+        device_name = f"Mouse {i+1}"
         team_names[device_name] = f"Team {i+1}"
 
     team_scores = {name: 0 for name in team_names.values()}
@@ -104,14 +104,6 @@ def main(stdscr):
 
         start_time = time.time()
         display_scores(stdscr, last_team, click_registered, team_scores, quiz_round)
-
-        # Check if the 'Enter' key was pressed to start a new round
-        if c == 10 and quiz_round[0] == 1 and click_registered[0]:
-            click_registered[0] = False
-            if last_team[0]:
-                team_scores[last_team[0]] += 1
-            last_team[0] = None
-            quiz_round[0] = 2  # Mark the round as completed
 
         # Check if the 'Enter' key was pressed to start the next round after completing a round
         if c == 10 and quiz_round[0] == 2:

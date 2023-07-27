@@ -1,46 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Mouse Click Quiz</title>
+    <title>Pub Quiz Scoreboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
 </head>
 <body>
-    <h1>Mouse Click Quiz</h1>
-    <p id="scores">Scores will appear here</p>
-    <button id="start_round_btn" onclick="startRound()">Start New Round</button>
+    <h1>Pub Quiz Scoreboard</h1>
 
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
+    <div id="scoreboard">
+        <h2>Scoreboard (Points):</h2>
+        <ul id="team-scores">
+            <!-- Team scores will be dynamically populated here -->
+        </ul>
+    </div>
+
+    <div id="team-clicked">
+        <h2>Last Clicked Team:</h2>
+        <p id="last-team"></p>
+    </div>
+
+    <div id="game-controls">
+        <button id="start-round-btn" onclick="startNewRound()">Start New Round</button>
+    </div>
+
     <script type="text/javascript">
-        const socket = io.connect('http://' + document.domain + ':' + location.port);
-
-        function startRound() {
-            socket.emit('start_new_round');
-        }
+        // SocketIO event handlers
+        var socket = io();
 
         socket.on('update_scores', function(data) {
-            const scoresElement = document.getElementById('scores');
-            scoresElement.innerHTML = '';
+            // Update the scores on the webpage
+            var scoreboard = document.getElementById('team-scores');
+            scoreboard.innerHTML = '';
 
-            scoresElement.innerHTML += '<h2>Functions:</h2>';
-            scoresElement.innerHTML += '<p>\'Q\' - Quit the game.<br>\'R\' - Reset the game.</p>';
-
-            scoresElement.innerHTML += '<h2>Scoreboard (Points):</h2>';
-            for (const teamName in data.team_scores) {
-                scoresElement.innerHTML += teamName + ': ' + data.team_scores[teamName] + ' points<br>';
+            for (const [teamName, score] of Object.entries(data.team_scores)) {
+                var li = document.createElement('li');
+                li.textContent = `${teamName}: ${score} points`;
+                scoreboard.appendChild(li);
             }
 
-            scoresElement.innerHTML += '<h2>Last team that clicked:</h2>';
-            if (data.click_registered && data.last_team) {
-                scoresElement.innerHTML += data.last_team + '<br>';
-            }
-
-            if (data.quiz_round === 1) {
-                if (data.click_registered) {
-                    scoresElement.innerHTML += '<br><button onclick="startRound()">Press \'Enter\' to start a new round.</button>';
-                } else {
-                    scoresElement.innerHTML += '<br>Round in progress. Teams can click their mice.<br>';
-                }
+            // Clear the last clicked team when a new round starts
+            if (data.quiz_round === 0) {
+                document.getElementById('last-team').textContent = '';
             }
         });
+
+        socket.on('mouse_click', function(data) {
+            // Display the last clicked team during the round
+            document.getElementById('last-team').textContent = data.team_name;
+        });
+
+        // Function to start a new round
+        function startNewRound() {
+            socket.emit('start_new_round');
+        }
     </script>
 </body>
 </html>

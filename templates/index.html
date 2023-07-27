@@ -26,29 +26,29 @@
     <script type="text/javascript">
         // SocketIO event handlers
         var socket = io();
-
+    
         socket.on('update_scores', function(data) {
             // Update the scores on the webpage
             var scoreboard = document.getElementById('team-scores');
             scoreboard.innerHTML = '';
-
+    
             for (const [teamName, score] of Object.entries(data.team_scores)) {
                 var li = document.createElement('li');
                 li.textContent = `${teamName}: ${score} points`;
                 scoreboard.appendChild(li);
             }
-
-            // Clear the last clicked team when a new round starts
-            if (data.quiz_round === 0) {
-                document.getElementById('last-team').textContent = '';
-            }
         });
-
+    
         socket.on('mouse_click', function(data) {
             // Display the last clicked team during the round
             document.getElementById('last-team').textContent = data.team_name;
         });
-
+    
+        // New event handler to clear the last clicked team when starting a new round
+        socket.on('start_new_round', function(data) {
+            document.getElementById('last-team').textContent = '';
+        });
+    
         // Function to start a new round
         function startNewRound() {
             socket.emit('start_new_round');

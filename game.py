@@ -68,16 +68,17 @@ def start_new_round():
     last_team[0] = None  # Reset last_team to None
     emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]}, broadcast=True)  # Emit the event with updated scores to all connected clients
 
-    def monitor_mouse_clicks():
-        while True:
-            for monitor, name in monitors:
-                event = monitor.read_one()
-                if event:
-                    if quiz_round[0] == 1 and not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
-                        last_team[0] = name
-                        click_registered[0] = True
-                        logger.info(f"Mouse click detected for {name}")
-                        socketio.emit('mouse_click', {'team_name': name}, namespace='/')  # Emit the mouse click event to all connected clients
+def monitor_mouse_clicks(monitors):
+    while True:
+        for monitor, name in monitors:
+            event = monitor.read_one()
+            if event:
+                if quiz_round[0] == 1 and not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
+                    last_team[0] = name
+                    click_registered[0] = True
+                    logger.info(f"Mouse click detected for {name}")
+                    socketio.emit('mouse_click', {'team_name': name}, namespace='/')  # Emit the mouse click event to all connected clients
+
 
     threading.Thread(target=monitor_mouse_clicks, daemon=True).start()
 
@@ -86,4 +87,7 @@ def index():
     return render_template('index.html', team_scores=team_scores, last_team=last_team[0], click_registered=click_registered[0], quiz_round=quiz_round[0])
 
 if __name__ == "__main__":
+    monitors = []  # Move the 'monitors' variable here to make it accessible in the main block
+    threading.Thread(target=monitor_mouse_clicks, args=(monitors,), daemon=True).start()
+
     socketio.run(app, host='0.0.0.0', port=5000)

@@ -85,9 +85,12 @@ def start_new_round():
 
     click_registered[0] = False  # Reset click_registered to False for each new round
 
-    if last_team[0] is not None and last_team[0] in team_scores:
-        team_scores[last_team[0]] += 1
-        emit('team_click', {'team_name': last_team[0]}, broadcast=True)  # Emit the team_click event to all connected clients
+    if last_team[0] is not None:
+        if last_team[0] in team_scores:
+            team_scores[last_team[0]] += 1
+            emit('team_click', {'team_name': last_team[0]}, broadcast=True)  # Emit the team_click event to all connected clients
+        else:
+            logger.warning(f"Received mouse click for an unknown team: {last_team[0]}")
 
     last_team[0] = None  # Reset last_team to None for each round
     emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]}, broadcast=True)  # Emit the event with updated scores to all connected clients

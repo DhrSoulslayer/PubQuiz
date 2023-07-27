@@ -45,20 +45,23 @@ def display_scores(stdscr, last_team, click_registered, team_scores, quiz_round)
 
     stdscr.addstr("\nFunctions:")
     stdscr.addstr("\n'Q' - Quit the game.")
-    stdscr.addstr("\n'R' - Reset the game.\n")
+    stdscr.addstr("\n'R' - Reset the game.")
+    stdscr.addstr("\n'P' - Replay the current round.\n")
 
-    stdscr.addstr("\nScoreboard:\n")
+    stdscr.addstr("\nScoreboard (Points):\n")
     for team_name, total_score in team_scores.items():
         stdscr.addstr(f"{team_name}: {total_score} points\n")
 
-    stdscr.addstr("\nTeam that clicked first: ")
+    stdscr.addstr("\nLast team that clicked: ")
     stdscr.addstr(f"{last_team[0]}\n" if click_registered[0] else "")
 
     if quiz_round[0] == 1:
         if click_registered[0]:
             stdscr.addstr("\nPress 'Enter' to start a new round.\n")
         else:
-            stdscr.addstr("\nRound in progress. Waiting for a team to click.....\n")
+            stdscr.addstr("\nRound in progress. Teams can click their mice.\n")
+    elif quiz_round[0] == 2:
+        stdscr.addstr("\nRound has been completed. Press 'P' to replay the round.\n")
 
     # Refresh the screen only when necessary
     stdscr.refresh()
@@ -68,6 +71,10 @@ def reset_game(team_scores, click_registered, last_team, quiz_round):
     click_registered[0] = False
     last_team[0] = None
     quiz_round[0] = 0
+
+def replay_round(click_registered, quiz_round):
+    click_registered[0] = False
+    quiz_round[0] = 1
 
 def cancel_restart_script():
     os.execl(sys.executable, sys.executable, *sys.argv)
@@ -82,7 +89,7 @@ def main(stdscr):
     monitors = []
     team_scores = {name: 0 for name in team_names.values()}
     last_team = [None]
-    quiz_round = [1]  # 0: Round not started, 1: Round in progress
+    quiz_round = [1]  # 0: Round not started, 1: Round in progress, 2: Round completed
     click_registered = [False]  # To track if a click has been registered in the current round
 
     for device, name in team_names.items():
@@ -111,6 +118,9 @@ def main(stdscr):
         elif c == ord('r') or c == ord('R'):  # Reset the game when 'R' key is pressed
             reset_game(team_scores, click_registered, last_team, quiz_round)
             cancel_restart_script()
+        elif c == ord('p') or c == ord('P'):  # Replay the current round when 'P' key is pressed
+            if quiz_round[0] == 2:  # Only allow replay if the round is completed
+                replay_round(click_registered, quiz_round)
 
         start_time = time.time()
         display_scores(stdscr, last_team, click_registered, team_scores, quiz_round)
@@ -121,6 +131,7 @@ def main(stdscr):
             if last_team[0]:
                 team_scores[last_team[0]] += 1
             last_team[0] = None
+            quiz_round[0] = 2  # Mark the round as completed
 
         # Refresh the screen only when necessary
         stdscr.refresh()

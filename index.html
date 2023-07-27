@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SWA PubQuiz 2023</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        h1 {
+            font-size: 36px;
+        }
+        .mouse {
+            width: 100px;
+            height: 100px;
+            margin: 10px;
+            background-color: #f0f0f0;
+            border: 2px solid #333;
+            border-radius: 50%;
+            display: inline-block;
+            cursor: pointer;
+        }
+        #scoreboard {
+            font-size: 24px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>SWA PubQuiz 2023</h1>
+
+    <div id="mice">
+        {% for team in team_names %}
+            <div class="mouse" id="{{ team }}">{{ team }}</div>
+        {% endfor %}
+    </div>
+
+    <div id="scoreboard">
+        <p>Scoreboard (Points):</p>
+        {% for team in team_names %}
+            <p>{{ team }}: {{ team_scores[team] }} points</p>
+        {% endfor %}
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+    <script>
+        const socket = io.connect();
+
+        document.querySelectorAll('.mouse').forEach(mouse => {
+            mouse.addEventListener('click', () => {
+                if (!clickRegistered) {
+                    clickRegistered = true;
+                    const teamName = mouse.id;
+                    socket.emit('mouse_click', teamName);
+                }
+            });
+        });
+
+        socket.on('update_scoreboard', (scores) => {
+            const scoreboardElement = document.getElementById('scoreboard');
+            let scoreboardHTML = "<p>Scoreboard (Points):</p>";
+            Object.keys(scores).forEach((team) => {
+                scoreboardHTML += `<p>${team}: ${scores[team]} points</p>`;
+            });
+            scoreboardElement.innerHTML = scoreboardHTML;
+        });
+
+        socket.on('update_last_team', (lastTeam) => {
+            const lastTeamElement = document.getElementById('last_team');
+            lastTeamElement.textContent = clickRegistered ? `Last team that clicked: ${lastTeam}` : "";
+        });
+
+        let clickRegistered = false;
+    </script>
+</body>
+</html>

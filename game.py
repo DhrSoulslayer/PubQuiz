@@ -62,7 +62,7 @@ def handle_connect():
         if last_team[0] is not None and last_team[0] in team_scores:
             team_scores[last_team[0]] += 1
         last_team[0] = None
-        emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]})
+        emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]}, broadcast=True)  # Emit the event with updated scores to all connected clients
 
     def monitor_mouse_clicks():
         while True:
@@ -73,6 +73,7 @@ def handle_connect():
                         last_team[0] = name
                         click_registered[0] = True
                         logger.info(f"Mouse click detected for {name}")
+                        emit('mouse_click', {'team_name': name}, broadcast=True)  # Emit the mouse click event to all connected clients
 
     threading.Thread(target=monitor_mouse_clicks, daemon=True).start()
 

@@ -56,14 +56,17 @@ def handle_connect():
         logger.error("No mice found or failed to open all devices.")
         return
 
-    @socketio.on('start_new_round')
-    def start_new_round():
-        click_registered[0] = False
-        if last_team[0] is not None and last_team[0] in team_scores:
-            team_scores[last_team[0]] += 1
-            emit('team_click', {'team_name': last_team[0]}, broadcast=True)  # Emit the team_click event to all connected clients
-        last_team[0] = None
-        emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]}, broadcast=True)  # Emit the event with updated scores to all connected clients
+@socketio.on('start_new_round')
+def start_new_round():
+    global last_team, click_registered
+
+    click_registered[0] = False
+    if last_team[0] is not None and last_team[0] in team_scores:
+        team_scores[last_team[0]] += 1
+        emit('team_click', {'team_name': last_team[0]}, broadcast=True)  # Emit the team_click event to all connected clients
+
+    last_team[0] = None  # Reset last_team to None
+    emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]}, broadcast=True)  # Emit the event with updated scores to all connected clients
 
     def monitor_mouse_clicks():
         while True:

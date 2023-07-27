@@ -121,6 +121,10 @@ def main(stdscr):
                     last_team[0] = name
                     click_registered[0] = True
 
+        # Reset click_registered for the new round
+        if quiz_round[0] == 0:
+            click_registered[0] = False
+
         # Refresh the screen only when necessary
         stdscr.refresh()
 

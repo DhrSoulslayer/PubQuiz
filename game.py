@@ -41,7 +41,7 @@ def handle_connect():
     monitors = []
     global team_scores, last_team, quiz_round, click_registered
     team_scores = {name: 0 for name in team_names.values()}
-    last_team = [None]
+    last_team = [None]  # Initialize last_team as None
     quiz_round = [1]  # 0: Round not started, 1: Round in progress
     click_registered = [False]  # To track if a click has been registered in the current round
 
@@ -59,7 +59,7 @@ def handle_connect():
     @socketio.on('start_new_round')
     def start_new_round():
         click_registered[0] = False
-        if last_team[0]:
+        if last_team[0] is not None and last_team[0] in team_scores:
             team_scores[last_team[0]] += 1
         last_team[0] = None
         emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]})

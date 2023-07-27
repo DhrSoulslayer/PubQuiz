@@ -65,7 +65,12 @@ def display_scores(stdscr, last_team, click_registered, team_scores, quiz_round)
     # Refresh the screen only when necessary
     stdscr.refresh()
 
-def reset_game(team_scores, click_registered, last_team, quiz_round):
+def reset_game(team_scores, click_registered, last_team, quiz_round, mouse_threads):
+    # Stop the mouse threads
+    for thread in mouse_threads:
+        thread[1][0] = False
+        thread[0].join()
+
     team_scores.clear()
     click_registered[0] = False
     last_team[0] = None
@@ -100,20 +105,19 @@ def main(stdscr):
 
     # Start a separate thread for each mouse to monitor mouse clicks
     mouse_threads = []
-    running = [True]  # Global variable to control the main loop and stop the mouse threads
+    running = [True]
     for monitor, name in monitors:
         mouse_thread = threading.Thread(target=monitor_mouse_clicks, args=(monitor, name, last_team, click_registered, running))
         mouse_thread.daemon = True
         mouse_thread.start()
-        mouse_threads.append(mouse_thread)
+        mouse_threads.append((mouse_thread, running))
 
-    while running[0]:
+    while True:
         c = stdscr.getch()
         if c == ord('q') or c == ord('Q'):
-            running[0] = False
             break
         elif c == ord('r') or c == ord('R'):  # Reset the game when 'R' key is pressed
-            reset_game(team_scores, click_registered, last_team, quiz_round)
+            reset_game(team_scores, click_registered, last_team, quiz_round, mouse_threads)
             # Wait for a short duration to prevent the 'R' key press from affecting the game loop
             time.sleep(0.1)
 
@@ -134,8 +138,9 @@ def main(stdscr):
         time.sleep(0.05)
 
     # Join all the mouse threads to ensure they are terminated properly
-    for mouse_thread in mouse_threads:
-        mouse_thread.join()
+    for thread in mouse_threads:
+        thread[1][0] = False
+        thread[0].join()
 
 if __name__ == "__main__":
     curses.wrapper(main)

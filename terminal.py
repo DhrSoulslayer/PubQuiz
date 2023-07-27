@@ -21,9 +21,9 @@ def assign_fun_team_names(devices):
             mouse_names[device.fn] = fun_team_names[i]
     return mouse_names
 
-def monitor_mouse_clicks(device, team_name, team_scores, last_team, quiz_round, click_registered):
+def monitor_mouse_clicks(device, team_name, last_team, click_registered):
     for event in device.read_loop():
-        if quiz_round[0] == 1 and not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
+        if not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
             last_team[0] = team_name
             click_registered[0] = True
 
@@ -47,18 +47,18 @@ def display_scores(stdscr, last_team, click_registered, team_scores, quiz_round)
     stdscr.addstr("\n'Q' - Quit the game.")
     stdscr.addstr("\n'R' - Reset the game.\n")
 
-    stdscr.addstr("\nScoreboard (Points):\n")
+    stdscr.addstr("\nScoreboard:\n")
     for team_name, total_score in team_scores.items():
         stdscr.addstr(f"{team_name}: {total_score} points\n")
 
-    stdscr.addstr("\nLast team that clicked: ")
+    stdscr.addstr("\nTeam that clicked first: ")
     stdscr.addstr(f"{last_team[0]}\n" if click_registered[0] else "")
 
     if quiz_round[0] == 1:
         if click_registered[0]:
             stdscr.addstr("\nPress 'Enter' to start a new round.\n")
         else:
-            stdscr.addstr("\nRound in progress. Teams can click their mice.\n")
+            stdscr.addstr("\nRound in progress. Waiting for a team to click.....\n")
 
     # Refresh the screen only when necessary
     stdscr.refresh()
@@ -96,6 +96,14 @@ def main(stdscr):
         print("No mice found or failed to open all devices.")
         return
 
+    # Start a separate thread for each mouse to monitor mouse clicks
+    mouse_threads = []
+    for monitor, name in monitors:
+        mouse_thread = threading.Thread(target=monitor_mouse_clicks, args=(monitor, name, last_team, click_registered))
+        mouse_thread.daemon = True
+        mouse_thread.start()
+        mouse_threads.append(mouse_thread)
+
     while True:
         c = stdscr.getch()
         if c == ord('q') or c == ord('Q'):
@@ -113,13 +121,6 @@ def main(stdscr):
             if last_team[0]:
                 team_scores[last_team[0]] += 1
             last_team[0] = None
-
-        for monitor, name in monitors:
-            event = monitor.read_one()
-            if event:
-                if quiz_round[0] == 1 and not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
-                    last_team[0] = name
-                    click_registered[0] = True
 
         # Refresh the screen only when necessary
         stdscr.refresh()

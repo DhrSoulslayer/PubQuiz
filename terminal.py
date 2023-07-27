@@ -21,9 +21,9 @@ def assign_fun_team_names(devices):
             mouse_names[device.fn] = fun_team_names[i]
     return mouse_names
 
-def monitor_mouse_clicks(device, team_name, team_scores, last_team, quiz_round, click_registered):
+def monitor_mouse_clicks(device, team_name, last_team, click_registered):
     for event in device.read_loop():
-        if quiz_round[0] == 1 and not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
+        if not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
             last_team[0] = team_name
             click_registered[0] = True
 
@@ -96,6 +96,11 @@ def main(stdscr):
         print("No mice found or failed to open all devices.")
         return
 
+    # Start the mouse click monitoring thread
+    mouse_thread = threading.Thread(target=monitor_mouse_clicks, args=(monitors[0][0], monitors[0][1], last_team, click_registered))
+    mouse_thread.daemon = True
+    mouse_thread.start()
+
     while True:
         c = stdscr.getch()
         if c == ord('q') or c == ord('Q'):
@@ -113,14 +118,6 @@ def main(stdscr):
             if last_team[0]:
                 team_scores[last_team[0]] += 1
             last_team[0] = None
-
-        # Clear event queue before starting a new round
-        for monitor, name in monitors:
-            monitor.read()
-
-        # Reset click_registered for the new round
-        if quiz_round[0] == 0:
-            click_registered[0] = False
 
         # Refresh the screen only when necessary
         stdscr.refresh()

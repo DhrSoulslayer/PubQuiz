@@ -46,11 +46,12 @@ def handle_connect():
     team_names = assign_fun_team_names(devices)
 
     monitors = []
-    global team_scores, quiz_round, click_registered, team_names_input
+    global team_scores, quiz_round, click_registered, team_names_input, teams_ready
     team_scores = {name: 0 for name in team_names.values()}
     quiz_round = [1]  # 0: Round not started, 1: Round in progress
     click_registered = [False]  # To track if a click has been registered in the current round
     team_names_input = {}  # To store team names entered by teams
+    teams_ready = set()  # To track teams that have entered their names
 
     for device, name in team_names.items():
         try:
@@ -83,11 +84,29 @@ def handle_connect():
 
     threading.Thread(target=monitor_mouse_clicks, args=(monitors, global_lock), daemon=True).start()
 
-@socketio.on('start_new_round')
-def start_new_round():
-    global click_registered, team_names_input
+@socketio.on('team_name_entered')
+def team_name_entered(data):
+    global team_names_input, teams_ready
 
     with global_lock:
+        # Store the team name that entered their name
+        team_name = data['team_name']
+        team_names_input[request.sid] = team_name
+        teams_ready.add(request.sid)
+
+        # Emit the event to notify all clients that a team has entered their name
+        emit('team_ready', {'team_name': team_name}, namespace='/', broadcast=True)
+
+@socketio.on('start_game')
+def start_game():
+    global quiz_round, click_registered, last_team, teams_ready
+
+    with global_lock:
+        # Check if all teams have entered their names before starting the game
+        if len(teams_ready) != len(team_scores):
+            logger.warning("Not all teams have entered their names. Cannot start the game yet.")
+            return
+
         click_registered[0] = False  # Reset click_registered to False for each new round
 
         # Reset last_team to None for each round
@@ -95,28 +114,6 @@ def start_new_round():
 
         # Emit the event to start a new round and prompt teams to enter their names
         emit('new_round_start', namespace='/', broadcast=True)
-
-@socketio.on('team_name_entered')
-def team_name_entered(data):
-    global team_scores, last_team, team_names_input
-
-    with global_lock:
-        # Check if a team clicked in the previous round and update its score
-        if last_team is not None:
-            if last_team in team_scores:
-                team_scores[last_team] += 1
-            else:
-                logger.warning(f"Received mouse click for an unknown team: {last_team}")
-
-        # Update the team name with the name entered by the team
-        team_name = data['team_name']
-        team_names_input[request.sid] = team_name
-
-        # Store the team name that clicked for updating scores in the next round
-        last_team = team_name
-
-        # Emit the event with updated scores to all connected clients, including all team scores
-        emit('update_scores', {'team_scores': team_scores, 'last_team': last_team, 'click_registered': click_registered[0], 'quiz_round': quiz_round[0], 'team_names_input': team_names_input}, namespace='/', broadcast=True)
 
 if __name__ == "__main__":
     socketio.run(app, host='0.0.0.0', port=5000)

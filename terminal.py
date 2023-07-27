@@ -114,12 +114,9 @@ def main(stdscr):
                 team_scores[last_team[0]] += 1
             last_team[0] = None
 
+        # Clear event queue before starting a new round
         for monitor, name in monitors:
-            event = monitor.read_one()
-            if event:
-                if quiz_round[0] == 1 and not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
-                    last_team[0] = name
-                    click_registered[0] = True
+            monitor.read()
 
         # Reset click_registered for the new round
         if quiz_round[0] == 0:

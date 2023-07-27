@@ -70,9 +70,5 @@ def handle_connect():
 
     threading.Thread(target=monitor_mouse_clicks, daemon=True).start()
 
-    while True:
-        socketio.sleep(0.05)
-        socketio.emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]})
-
 if __name__ == "__main__":
     socketio.run(app, host='0.0.0.0', port=5000)

@@ -10,7 +10,7 @@ from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='threading')  # Use threading as the async mode
 
 def assign_fun_team_names(devices):
     fun_team_names = [
@@ -22,7 +22,7 @@ def assign_fun_team_names(devices):
     mouse_names = {}
     for i, device in enumerate(devices):
         if i < len(fun_team_names) and "mouse" in device.name.lower():
-            mouse_names[device.fn] = fun_team_names[i]
+            mouse_names[device.path] = fun_team_names[i]  # Use device.path instead of device.fn
     return mouse_names
 
 @app.route('/')

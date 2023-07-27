@@ -32,6 +32,7 @@ def assign_fun_team_names(devices):
             mouse_names[device.path] = fun_team_names[i]  # Use device.path instead of device.fn
     return mouse_names
 
+# Add a lock for proper synchronization
 global_lock = threading.Lock()
 
 @socketio.on('connect')
@@ -93,7 +94,6 @@ def start_new_round():
         if last_team[0] is not None:
             if last_team[0] in team_scores:
                 team_scores[last_team[0]] += 1
-                emit('team_click', {'team_name': last_team[0]}, broadcast=True)  # Emit the team_click event to all connected clients
             else:
                 logger.warning(f"Received mouse click for an unknown team: {last_team[0]}")
 

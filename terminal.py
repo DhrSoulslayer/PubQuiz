@@ -47,18 +47,18 @@ def display_scores(stdscr, last_team, click_registered, team_scores, quiz_round)
     stdscr.addstr("\n'Q' - Quit the game.")
     stdscr.addstr("\n'R' - Reset the game.\n")
 
-    stdscr.addstr("\nScoreboard (Points):\n")
+    stdscr.addstr("\nScoreboard:\n")
     for team_name, total_score in team_scores.items():
         stdscr.addstr(f"{team_name}: {total_score} points\n")
 
-    stdscr.addstr("\nLast team that clicked: ")
+    stdscr.addstr("\nTeam that clicked first: ")
     stdscr.addstr(f"{last_team[0]}\n" if click_registered[0] else "")
 
     if quiz_round[0] == 1:
         if click_registered[0]:
             stdscr.addstr("\nPress 'Enter' to start a new round.\n")
         else:
-            stdscr.addstr("\nRound in progress. Teams can click their mice.\n")
+            stdscr.addstr("\nRound in progress. Waiting for a team to click.....\n")
 
     # Refresh the screen only when necessary
     stdscr.refresh()

@@ -85,6 +85,7 @@ def start_new_round():
 
     click_registered[0] = False  # Reset click_registered to False for each new round
 
+    # Check if a team clicked in the previous round and update its score
     if last_team[0] is not None:
         if last_team[0] in team_scores:
             team_scores[last_team[0]] += 1
@@ -92,8 +93,11 @@ def start_new_round():
         else:
             logger.warning(f"Received mouse click for an unknown team: {last_team[0]}")
 
-    last_team[0] = None  # Reset last_team to None for each round
-    emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]}, broadcast=True)  # Emit the event with updated scores to all connected clients
+    # Reset last_team to None for each round
+    last_team[0] = None
+
+    # Emit the event with updated scores to all connected clients, including all team scores
+    emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]}, broadcast=True)
 
 if __name__ == "__main__":
     socketio.run(app, host='0.0.0.0', port=5000)

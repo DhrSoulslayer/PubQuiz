@@ -73,7 +73,7 @@ def handle_connect():
                         last_team[0] = name
                         click_registered[0] = True
                         logger.info(f"Mouse click detected for {name}")
-                        emit('mouse_click', {'team_name': name}, broadcast=True)  # Emit the mouse click event to all connected clients
+                        socketio.emit('mouse_click', {'team_name': name}, namespace='/')  # Emit the mouse click event to all connected clients
 
     threading.Thread(target=monitor_mouse_clicks, daemon=True).start()
 

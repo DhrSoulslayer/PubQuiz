@@ -35,17 +35,22 @@ def assign_fun_team_names(devices):
 # Add a lock for proper synchronization
 global_lock = threading.Lock()
 
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 @socketio.on('connect')
 def handle_connect():
     devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
     team_names = assign_fun_team_names(devices)
 
     monitors = []
-    global team_scores, last_team, quiz_round, click_registered
+    global team_scores, quiz_round, click_registered, team_names_input
     team_scores = {name: 0 for name in team_names.values()}
-    last_team = [None]  # Initialize last_team as None
     quiz_round = [1]  # 0: Round not started, 1: Round in progress
     click_registered = [False]  # To track if a click has been registered in the current round
+    team_names_input = {}  # To store team names entered by teams
 
     for device, name in team_names.items():
         try:
@@ -78,30 +83,40 @@ def handle_connect():
 
     threading.Thread(target=monitor_mouse_clicks, args=(monitors, global_lock), daemon=True).start()
 
-@app.route('/')
-def index():
-    global team_scores, last_team, click_registered, quiz_round
-    return render_template('index.html', team_scores=team_scores, last_team=last_team[0], click_registered=click_registered[0], quiz_round=quiz_round[0])
-
 @socketio.on('start_new_round')
 def start_new_round():
-    global team_scores, last_team, click_registered
+    global click_registered, team_names_input
 
     with global_lock:
         click_registered[0] = False  # Reset click_registered to False for each new round
 
-        # Check if a team clicked in the previous round and update its score
-        if last_team[0] is not None:
-            if last_team[0] in team_scores:
-                team_scores[last_team[0]] += 1
-            else:
-                logger.warning(f"Received mouse click for an unknown team: {last_team[0]}")
-
         # Reset last_team to None for each round
-        last_team[0] = None
+        last_team = None
+
+        # Emit the event to start a new round and prompt teams to enter their names
+        emit('new_round_start', namespace='/', broadcast=True)
+
+@socketio.on('team_name_entered')
+def team_name_entered(data):
+    global team_scores, last_team, team_names_input
+
+    with global_lock:
+        # Check if a team clicked in the previous round and update its score
+        if last_team is not None:
+            if last_team in team_scores:
+                team_scores[last_team] += 1
+            else:
+                logger.warning(f"Received mouse click for an unknown team: {last_team}")
+
+        # Update the team name with the name entered by the team
+        team_name = data['team_name']
+        team_names_input[request.sid] = team_name
+
+        # Store the team name that clicked for updating scores in the next round
+        last_team = team_name
 
         # Emit the event with updated scores to all connected clients, including all team scores
-        emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]}, broadcast=True)
+        emit('update_scores', {'team_scores': team_scores, 'last_team': last_team, 'click_registered': click_registered[0], 'quiz_round': quiz_round[0], 'team_names_input': team_names_input}, namespace='/', broadcast=True)
 
 if __name__ == "__main__":
     socketio.run(app, host='0.0.0.0', port=5000)

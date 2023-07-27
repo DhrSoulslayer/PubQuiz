@@ -21,10 +21,8 @@ def assign_fun_team_names(devices):
             mouse_names[device.fn] = fun_team_names[i]
     return mouse_names
 
-def monitor_mouse_clicks(device, team_name, last_team, click_registered, running):
+def monitor_mouse_clicks(device, team_name, last_team, click_registered):
     for event in device.read_loop():
-        if not running[0]:
-            break
         if not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
             last_team[0] = team_name
             click_registered[0] = True
@@ -65,19 +63,14 @@ def display_scores(stdscr, last_team, click_registered, team_scores, quiz_round)
     # Refresh the screen only when necessary
     stdscr.refresh()
 
-def reset_game(team_scores, click_registered, last_team, quiz_round, mouse_threads):
-    # Stop the mouse threads
-    for thread in mouse_threads:
-        thread[1][0] = False
-        thread[0].join()
-
+def reset_game(team_scores, click_registered, last_team, quiz_round):
     team_scores.clear()
     click_registered[0] = False
     last_team[0] = None
     quiz_round[0] = 0
 
-def cancel_restart_script(running):
-    running[0] = False
+def cancel_restart_script():
+    os.execl(sys.executable, sys.executable, *sys.argv)
 
 def main(stdscr):
     curses.curs_set(0)
@@ -105,23 +98,19 @@ def main(stdscr):
 
     # Start a separate thread for each mouse to monitor mouse clicks
     mouse_threads = []
-    running = [True]
     for monitor, name in monitors:
-        mouse_thread = threading.Thread(target=monitor_mouse_clicks, args=(monitor, name, last_team, click_registered, running))
+        mouse_thread = threading.Thread(target=monitor_mouse_clicks, args=(monitor, name, last_team, click_registered))
         mouse_thread.daemon = True
         mouse_thread.start()
-        mouse_threads.append((mouse_thread, running))
+        mouse_threads.append(mouse_thread)
 
     while True:
         c = stdscr.getch()
         if c == ord('q') or c == ord('Q'):
             break
         elif c == ord('r') or c == ord('R'):  # Reset the game when 'R' key is pressed
-            reset_game(team_scores, click_registered, last_team, quiz_round, mouse_threads)
-            # Reset the click_registered flag for a new round to start
-            click_registered[0] = False
-            # Wait for a short duration to prevent the 'R' key press from affecting the game loop
-            time.sleep(0.1)
+            reset_game(team_scores, click_registered, last_team, quiz_round)
+            cancel_restart_script()
 
         start_time = time.time()
         display_scores(stdscr, last_team, click_registered, team_scores, quiz_round)

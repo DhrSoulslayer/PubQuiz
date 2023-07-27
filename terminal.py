@@ -118,6 +118,8 @@ def main(stdscr):
             break
         elif c == ord('r') or c == ord('R'):  # Reset the game when 'R' key is pressed
             reset_game(team_scores, click_registered, last_team, quiz_round, mouse_threads)
+            # Reset the click_registered flag for a new round to start
+            click_registered[0] = False
             # Wait for a short duration to prevent the 'R' key press from affecting the game loop
             time.sleep(0.1)
 

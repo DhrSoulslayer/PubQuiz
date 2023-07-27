@@ -80,25 +80,12 @@ def main(stdscr):
     curses.curs_set(0)
     stdscr.timeout(0)  # Non-blocking getch
 
-    devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
-    team_names = assign_fun_team_names(devices)
+    team_names = assign_fun_team_names(pygame.mouse.get_devices())
 
-    monitors = []
     team_scores = {name: 0 for name in team_names.values()}
     last_team = [None]
     quiz_round = [0]  # 0: Round not started, 1: Round in progress, 2: Round completed
     click_registered = [False]  # To track if a click has been registered in the current round
-
-    for device, name in team_names.items():
-        try:
-            monitor = evdev.InputDevice(device)
-            monitors.append((monitor, name))
-        except:
-            print(f"Failed to open device: {device}")
-
-    if not monitors:
-        print("No mice found or failed to open all devices.")
-        return
 
     while True:
         c = stdscr.getch()

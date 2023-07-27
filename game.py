@@ -32,6 +32,8 @@ def assign_fun_team_names(devices):
             mouse_names[device.path] = fun_team_names[i]  # Use device.path instead of device.fn
     return mouse_names
 
+global_lock = threading.Lock()
+
 @socketio.on('connect')
 def handle_connect():
     devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
@@ -55,7 +57,7 @@ def handle_connect():
         logger.error("No mice found or failed to open all devices.")
         return
 
-    def monitor_mouse_clicks(monitors):
+    def monitor_mouse_clicks(monitors, lock):
         last_clicked_team = None
 
         while True:
@@ -63,16 +65,17 @@ def handle_connect():
                 event = monitor.read_one()
                 if event:
                     if quiz_round[0] == 1 and not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
-                        last_clicked_team = name
-                        click_registered[0] = True
-                        logger.info(f"Mouse click detected for {name}")
+                        with lock:
+                            last_clicked_team = name
+                            click_registered[0] = True
+                            logger.info(f"Mouse click detected for {name}")
 
             if last_clicked_team:
                 # Use socketio object to emit the event within the Flask-SocketIO context
                 socketio.emit('mouse_click', {'team_name': last_clicked_team}, namespace='/')
                 last_clicked_team = None
 
-    threading.Thread(target=monitor_mouse_clicks, args=(monitors,), daemon=True).start()
+    threading.Thread(target=monitor_mouse_clicks, args=(monitors, global_lock), daemon=True).start()
 
 @app.route('/')
 def index():
@@ -83,21 +86,22 @@ def index():
 def start_new_round():
     global team_scores, last_team, click_registered
 
-    click_registered[0] = False  # Reset click_registered to False for each new round
+    with global_lock:
+        click_registered[0] = False  # Reset click_registered to False for each new round
 
-    # Check if a team clicked in the previous round and update its score
-    if last_team[0] is not None:
-        if last_team[0] in team_scores:
-            team_scores[last_team[0]] += 1
-            emit('team_click', {'team_name': last_team[0]}, broadcast=True)  # Emit the team_click event to all connected clients
-        else:
-            logger.warning(f"Received mouse click for an unknown team: {last_team[0]}")
+        # Check if a team clicked in the previous round and update its score
+        if last_team[0] is not None:
+            if last_team[0] in team_scores:
+                team_scores[last_team[0]] += 1
+                emit('team_click', {'team_name': last_team[0]}, broadcast=True)  # Emit the team_click event to all connected clients
+            else:
+                logger.warning(f"Received mouse click for an unknown team: {last_team[0]}")
 
-    # Reset last_team to None for each round
-    last_team[0] = None
+        # Reset last_team to None for each round
+        last_team[0] = None
 
-    # Emit the event with updated scores to all connected clients, including all team scores
-    emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]}, broadcast=True)
+        # Emit the event with updated scores to all connected clients, including all team scores
+        emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]}, broadcast=True)
 
 if __name__ == "__main__":
     socketio.run(app, host='0.0.0.0', port=5000)

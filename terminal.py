@@ -96,10 +96,13 @@ def main(stdscr):
         print("No mice found or failed to open all devices.")
         return
 
-    # Start the mouse click monitoring thread
-    mouse_thread = threading.Thread(target=monitor_mouse_clicks, args=(monitors[0][0], monitors[0][1], last_team, click_registered))
-    mouse_thread.daemon = True
-    mouse_thread.start()
+    # Start a separate thread for each mouse to monitor mouse clicks
+    mouse_threads = []
+    for monitor, name in monitors:
+        mouse_thread = threading.Thread(target=monitor_mouse_clicks, args=(monitor, name, last_team, click_registered))
+        mouse_thread.daemon = True
+        mouse_thread.start()
+        mouse_threads.append(mouse_thread)
 
     while True:
         c = stdscr.getch()

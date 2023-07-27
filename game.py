@@ -79,6 +79,10 @@ def handle_connect():
 
 @app.route('/')
 def index():
+    global team_scores, last_team, quiz_round, click_registered
+    # Initialize team_scores if it hasn't been initialized yet
+    if 'team_scores' not in globals():
+        team_scores = {}
     return render_template('index.html', team_scores=team_scores, last_team=last_team[0], click_registered=click_registered[0], quiz_round=quiz_round[0])
 
 if __name__ == "__main__":

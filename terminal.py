@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import evdev
-import threading
 import os
 import curses
 import time
@@ -20,12 +19,6 @@ def assign_fun_team_names(devices):
         if i < len(fun_team_names) and "mouse" in device.name.lower():
             mouse_names[device.fn] = fun_team_names[i]
     return mouse_names
-
-def monitor_mouse_clicks(device, team_name, last_team, click_registered):
-    for event in device.read_loop():
-        if not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
-            last_team[0] = team_name
-            click_registered[0] = True
 
 def display_scores(stdscr, last_team, click_registered, team_scores, quiz_round):
     stdscr.clear()
@@ -132,6 +125,7 @@ def main(stdscr):
             quiz_round[0] = 1  # Start the next round
             click_registered[0] = False
 
+        # Check for mouse clicks
         for monitor, name in monitors:
             event = monitor.read_one()
             if event:

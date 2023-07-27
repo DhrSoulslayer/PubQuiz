@@ -35,7 +35,7 @@ def handle_connect():
     team_names = assign_fun_team_names(devices)
 
     monitors = []
-    global team_scores
+    global team_scores, last_team, quiz_round, click_registered
     team_scores = {name: 0 for name in team_names.values()}
     last_team = [None]
     quiz_round = [1]  # 0: Round not started, 1: Round in progress

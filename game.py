@@ -82,7 +82,10 @@ def handle_connect():
 
 @app.route('/')
 def index():
+    global team_scores, last_team, click_registered, quiz_round
     return render_template('index.html', team_scores=team_scores, last_team=last_team[0], click_registered=click_registered[0], quiz_round=quiz_round[0])
+
+
 
 if __name__ == "__main__":
     socketio.run(app, host='0.0.0.0', port=5000)

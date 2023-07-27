@@ -81,7 +81,7 @@ def index():
 
 @socketio.on('start_new_round')
 def start_new_round():
-    global last_team, click_registered
+    global team_scores, last_team, click_registered
 
     click_registered[0] = False  # Reset click_registered to False for each new round
 

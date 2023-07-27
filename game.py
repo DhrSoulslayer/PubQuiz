@@ -18,9 +18,19 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def assign_fun_team_names(devices):
-    # ... (same as before)
+    fun_team_names = [
+        "Thunderbolts", "Moonwalkers", "Fire Dragons", "Super Strikers", "Fantastic Falcons",
+        "Turtle Ninjas", "Cosmic Comets", "Rainbow Unicorns", "Daring Dolphins", "Mighty Martians",
+        "Galactic Guardians", "Laser Legends", "Meteor Mavericks", "Quantum Quasars", "Celestial Centurions",
+        "Starship Strikers", "Nebula Knights", "Astral Avengers", "Supernova Surfers", "Interstellar Invincibles"
+    ]
+    random.shuffle(fun_team_names)
 
-# ... (same functions as before)
+    mouse_names = {}
+    for i, device in enumerate(devices):
+        if i < len(fun_team_names) and "mouse" in device.name.lower():
+            mouse_names[device.path] = fun_team_names[i]  # Use device.path instead of device.fn
+    return mouse_names
 
 @socketio.on('connect')
 def handle_connect():

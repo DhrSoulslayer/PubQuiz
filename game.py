@@ -55,34 +55,22 @@ def handle_connect():
         logger.error("No mice found or failed to open all devices.")
         return
 
-    @socketio.on('start_new_round')
-    def start_new_round():
-        global last_team, click_registered
+    def monitor_mouse_clicks(monitors):
+        last_clicked_team = None
 
-        click_registered[0] = False
-        if last_team[0] is not None and last_team[0] in team_scores:
-            team_scores[last_team[0]] += 1
-            emit('team_click', {'team_name': last_team[0]}, broadcast=True)  # Emit the team_click event to all connected clients
+        while True:
+            for monitor, name in monitors:
+                event = monitor.read_one()
+                if event:
+                    if quiz_round[0] == 1 and not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
+                        last_clicked_team = name
+                        click_registered[0] = True
+                        logger.info(f"Mouse click detected for {name}")
 
-        last_team[0] = None  # Reset last_team to None for each round
-        emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]}, broadcast=True)  # Emit the event with updated scores to all connected clients
-
-def monitor_mouse_clicks(monitors):
-    last_clicked_team = None
-
-    while True:
-        for monitor, name in monitors:
-            event = monitor.read_one()
-            if event:
-                if quiz_round[0] == 1 and not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
-                    last_clicked_team = name
-                    click_registered[0] = True
-                    logger.info(f"Mouse click detected for {name}")
-
-        if last_clicked_team:
-            # Use socketio object to emit the event within the Flask-SocketIO context
-            socketio.emit('mouse_click', {'team_name': last_clicked_team}, namespace='/')
-            last_clicked_team = None
+            if last_clicked_team:
+                # Use socketio object to emit the event within the Flask-SocketIO context
+                socketio.emit('mouse_click', {'team_name': last_clicked_team}, namespace='/')
+                last_clicked_team = None
 
     threading.Thread(target=monitor_mouse_clicks, args=(monitors,), daemon=True).start()
 
@@ -90,6 +78,19 @@ def monitor_mouse_clicks(monitors):
 def index():
     global team_scores, last_team, click_registered, quiz_round
     return render_template('index.html', team_scores=team_scores, last_team=last_team[0], click_registered=click_registered[0], quiz_round=quiz_round[0])
+
+@socketio.on('start_new_round')
+def start_new_round():
+    global last_team, click_registered
+
+    click_registered[0] = False  # Reset click_registered to False for each new round
+
+    if last_team[0] is not None and last_team[0] in team_scores:
+        team_scores[last_team[0]] += 1
+        emit('team_click', {'team_name': last_team[0]}, broadcast=True)  # Emit the team_click event to all connected clients
+
+    last_team[0] = None  # Reset last_team to None for each round
+    emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]}, broadcast=True)  # Emit the event with updated scores to all connected clients
 
 if __name__ == "__main__":
     socketio.run(app, host='0.0.0.0', port=5000)

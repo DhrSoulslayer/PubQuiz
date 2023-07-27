@@ -16,8 +16,8 @@ def assign_fun_team_names(devices):
 
     mouse_names = {}
     for i, device in enumerate(devices):
-        if i < len(fun_team_names) and "mouse" in device.name.lower():
-            mouse_names[device.fn] = fun_team_names[i]
+        if i < len(fun_team_names) and "mouse" in device.lower():
+            mouse_names[device] = fun_team_names[i]
     return mouse_names
 
 def display_scores(stdscr, last_team, click_registered, team_scores, quiz_round):
@@ -80,7 +80,11 @@ def main(stdscr):
     curses.curs_set(0)
     stdscr.timeout(0)  # Non-blocking getch
 
-    team_names = assign_fun_team_names(pygame.mouse.get_devices())
+    num_mice = pygame.mouse.get_count()
+    team_names = {}
+    for i in range(num_mice):
+        device_name = pygame.mouse.get_name(i)
+        team_names[device_name] = f"Team {i+1}"
 
     team_scores = {name: 0 for name in team_names.values()}
     last_team = [None]
@@ -117,7 +121,7 @@ def main(stdscr):
         # Check for mouse clicks
         for event in pygame.event.get():
             if quiz_round[0] == 1 and not click_registered[0] and event.type == pygame.MOUSEBUTTONDOWN:
-                last_team[0] = team_names[event.device]
+                last_team[0] = team_names[pygame.mouse.get_name()]
                 click_registered[0] = True
 
         # Refresh the screen only when necessary

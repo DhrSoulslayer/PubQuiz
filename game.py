@@ -12,6 +12,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
 socketio = SocketIO(app, async_mode='threading')  # Use threading as the async mode
 
+
 def assign_fun_team_names(devices):
     fun_team_names = [
         "Thunderbolts", "Moonwalkers", "Fire Dragons", "Super Strikers", "Fantastic Falcons",
@@ -24,10 +25,6 @@ def assign_fun_team_names(devices):
         if i < len(fun_team_names) and "mouse" in device.name.lower():
             mouse_names[device.path] = fun_team_names[i]  # Use device.path instead of device.fn
     return mouse_names
-
-@app.route('/')
-def index():
-    return render_template('index.html', team_scores=team_scores, last_team=last_team[0], click_registered=click_registered[0], quiz_round=quiz_round[0])
 
 @socketio.on('connect')
 def handle_connect():
@@ -58,6 +55,7 @@ def handle_connect():
         if last_team[0]:
             team_scores[last_team[0]] += 1
         last_team[0] = None
+        emit('update_scores', {'team_scores': team_scores, 'last_team': last_team[0], 'click_registered': click_registered[0], 'quiz_round': quiz_round[0]})
 
     def monitor_mouse_clicks():
         while True:
@@ -69,6 +67,10 @@ def handle_connect():
                         click_registered[0] = True
 
     threading.Thread(target=monitor_mouse_clicks, daemon=True).start()
+
+@app.route('/')
+def index():
+    return render_template('index.html', team_scores=team_scores, last_team=last_team[0], click_registered=click_registered[0], quiz_round=quiz_round[0])
 
 if __name__ == "__main__":
     socketio.run(app, host='0.0.0.0', port=5000)

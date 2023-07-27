@@ -27,7 +27,7 @@ def assign_fun_team_names(devices):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', team_scores=team_scores, last_team=last_team[0], click_registered=click_registered[0], quiz_round=quiz_round[0])
 
 @socketio.on('connect')
 def handle_connect():
@@ -35,6 +35,7 @@ def handle_connect():
     team_names = assign_fun_team_names(devices)
 
     monitors = []
+    global team_scores
     team_scores = {name: 0 for name in team_names.values()}
     last_team = [None]
     quiz_round = [1]  # 0: Round not started, 1: Round in progress

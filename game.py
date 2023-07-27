@@ -62,4 +62,5 @@ def index():
         return render_template('index.html', team_scores=team_scores, last_team=last_team, quiz_round=quiz_round, click_registered=click_registered)
 
 if __name__ == "__main__":
+    socketio.run(app, host='0.0.0.0')
     app.run()

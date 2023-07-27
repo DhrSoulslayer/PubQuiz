@@ -5,6 +5,7 @@ import threading
 import os
 import time
 import random
+import logging
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 
@@ -12,11 +13,17 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
 socketio = SocketIO(app, async_mode='threading')  # Use threading as the async mode
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def assign_fun_team_names(devices):
     fun_team_names = [
         "Thunderbolts", "Moonwalkers", "Fire Dragons", "Super Strikers", "Fantastic Falcons",
-        "Turtle Ninjas", "Cosmic Comets", "Rainbow Unicorns", "Daring Dolphins", "Mighty Martians"
+        "Turtle Ninjas", "Cosmic Comets", "Rainbow Unicorns", "Daring Dolphins", "Mighty Martians",
+        "Galactic Guardians", "Laser Legends", "Meteor Mavericks", "Quantum Quasars", "Celestial Centurions",
+        "Starship Strikers", "Nebula Knights", "Astral Avengers", "Supernova Surfers", "Interstellar Invincibles"
     ]
     random.shuffle(fun_team_names)
 
@@ -43,10 +50,10 @@ def handle_connect():
             monitor = evdev.InputDevice(device)
             monitors.append((monitor, name))
         except:
-            print(f"Failed to open device: {device}")
+            logger.error(f"Failed to open device: {device}")
 
     if not monitors:
-        print("No mice found or failed to open all devices.")
+        logger.error("No mice found or failed to open all devices.")
         return
 
     @socketio.on('start_new_round')
@@ -65,6 +72,7 @@ def handle_connect():
                     if quiz_round[0] == 1 and not click_registered[0] and event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.BTN_LEFT and event.value == 1:
                         last_team[0] = name
                         click_registered[0] = True
+                        logger.info(f"Mouse click detected for {name}")
 
     threading.Thread(target=monitor_mouse_clicks, daemon=True).start()
 

@@ -139,10 +139,5 @@ def main(stdscr):
         # Sleep for a short duration to reduce flickering
         time.sleep(0.05)
 
-    # Join all the mouse threads to ensure they are terminated properly
-    for thread in mouse_threads:
-        thread[1][0] = False
-        thread[0].join()
-
 if __name__ == "__main__":
     curses.wrapper(main)

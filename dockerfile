@@ -3,7 +3,6 @@
 FROM ubuntu22.04
 COPY requirements.txt requirements.txt
 RUN apt update
-RUN apt dist-upgrade -y
 RUN apt install -y python3 python3-pip ttyd
 RUN pip3 install -r requirements.txt
 COPY . .

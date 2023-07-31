@@ -8,18 +8,19 @@ import time
 import sys
 import random
 
-def assign_fun_team_names(devices):
-    fun_team_names = [
-        "Thunderbolts", "Moonwalkers", "Fire Dragons", "Super Strikers", "Fantastic Falcons",
-        "Turtle Ninjas", "Cosmic Comets", "Rainbow Unicorns", "Daring Dolphins", "Mighty Martians"
-    ]
-    random.shuffle(fun_team_names)
+def read_team_config():
+    team_names = {}
+    try:
+        with open('team_config.txt', 'r') as config_file:
+            for line in config_file:
+                usb_id, team_name = line.strip().split(':')
+                team_names[usb_id] = team_name
+    except FileNotFoundError:
+        print("ERROR: team_config.txt not found.")
+        input("Press Enter to continue and run setup.sh")
+        sys.exit()
 
-    mouse_names = {}
-    for i, device in enumerate(devices):
-        if i < len(fun_team_names) and "mouse" in device.name.lower():
-            mouse_names[device.fn] = fun_team_names[i]
-    return mouse_names
+    return team_names
 
 def monitor_mouse_clicks(device, team_name, last_team, click_registered):
     for event in device.read_loop():
@@ -77,7 +78,7 @@ def main(stdscr):
     stdscr.timeout(0)  # Non-blocking getch
 
     devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
-    team_names = assign_fun_team_names(devices)
+    team_names = read_team_config()
 
     monitors = []
     team_scores = {name: 0 for name in team_names.values()}

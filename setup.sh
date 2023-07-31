@@ -24,7 +24,7 @@ get_usb_id() {
     echo "Waiting for a left mouse click..."
     local event_id
     while true; do
-        event_id=$(xinput test-xi2 --root | grep "EVENT type 13 (RawButtonPress)" -m 1 | awk '{print $8}')
+        event_id=$(xinput test-xi2 --root | grep "EVENT type 4 (ButtonPress)" -m 1 | awk '{print $8}')
         if [[ "$event_id" ]]; then
             local usb_id=$(xinput list --long "$event_id" | grep -oP 'id=\K\d+')
             echo "$usb_id"

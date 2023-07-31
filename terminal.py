@@ -10,8 +10,7 @@ import random
 
 def assign_fun_team_names(devices):
     fun_team_names = [
-        "Thunderbolts", "Moonwalkers", "Fire Dragons", "Super Strikers", "Fantastic Falcons",
-        "Turtle Ninjas", "Cosmic Comets", "Rainbow Unicorns", "Daring Dolphins", "Mighty Martians"
+        "Team Rood", "Team Geel", "Team Groen", "Team Wit", "Team Blauw"
     ]
     random.shuffle(fun_team_names)
 

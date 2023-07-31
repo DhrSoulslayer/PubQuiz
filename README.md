@@ -7,8 +7,8 @@ Additionally the terminal can be shown on a webpage using a terminal to webpage 
 ## Requirements
 
 - Python 3 (install using `apt install python3`)
+- Python 3 Pip (install using `apt install python3-pip`)
 - evdev library (install using `pip install evdev`)
-- xinput (install using `apt install xinput`)
 
 ## Setting Up
 For the scoring system to work correctly the mice ID's need to be configured for the teams.
